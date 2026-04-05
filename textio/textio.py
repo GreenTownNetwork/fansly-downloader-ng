@@ -18,11 +18,10 @@ LOG_FILE_NAME: str = 'fansly_downloader_ng.log'
 # most of the time, we utilize this to display colored output rather than logging or prints
 def output(level: int, log_type: str, color: str, message: str) -> None:
     try:
-        logger.level(log_type, no = level, color = color)
-
-    except TypeError:
-        # level failsafe
-        pass 
+        logger.level(log_type)
+    except ValueError:
+        # Register custom level only once; re-registering with "no" raises ValueError in Loguru.
+        logger.level(log_type, no=level, color=color)
 
     logger.__class__.type = partialmethod(logger.__class__.log, log_type)
 
