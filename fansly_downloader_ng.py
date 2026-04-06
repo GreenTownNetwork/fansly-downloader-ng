@@ -150,6 +150,7 @@ def main(config: FanslyConfig) -> int:
                 # Normal: Downloads Timeline + Messages one after another.
                 # Timeline: Scrapes only the creator's timeline content.
                 # Messages: Scrapes only the creator's messages content.
+                # Posts: Downloads media from messages + timeline and writes JSON post metadata for both sources.
                 # Single: Fetch a single post by the post's ID. Click on a post to see its ID in the url bar e.g. ../post/1283493240234
                 # Collection: Download all content listed within the "Purchased Media Collection"
 
@@ -161,6 +162,10 @@ def main(config: FanslyConfig) -> int:
 
                 elif config.download_mode == DownloadMode.COLLECTION:
                     download_collections(config, state)
+
+                elif config.download_mode == DownloadMode.POSTS:
+                    download_messages(config, state, export_posts_json=True)
+                    download_timeline(config, state, export_posts_json=True)
 
                 else:
                     if any([config.download_mode == DownloadMode.MESSAGES, config.download_mode == DownloadMode.NORMAL]):

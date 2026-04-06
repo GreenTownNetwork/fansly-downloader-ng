@@ -8,15 +8,21 @@ from time import sleep
 from .common import get_unique_media_ids, process_download_accessible_media
 from .downloadstate import DownloadState
 from .media import download_media_infos
+from .posts import collect_posts_records, save_posts_json
 from .types import DownloadType
 
 from config import FanslyConfig
 from textio import input_enter_continue, print_error, print_info, print_warning
 
 
-def download_messages(config: FanslyConfig, state: DownloadState):
+def download_messages(
+            config: FanslyConfig,
+            state: DownloadState,
+            export_posts_json: bool=False,
+        ):
     # This is important for directory creation later on.
     state.download_type = DownloadType.MESSAGES
+    collected_posts: list[dict] = []
 
     print_info(f"Initiating Messages procedure. Standby for results.")
     print()
@@ -60,6 +66,14 @@ def download_messages(config: FanslyConfig, state: DownloadState):
                     # Object contains: messages, accountMedia, accountMediaBundles, tips, tipGoals, stories
                     messages = messages_response.json()['response']
 
+                    if export_posts_json:
+                        collected_posts.extend(
+                            collect_posts_records(
+                                messages.get('messages', []),
+                                source='messages',
+                            )
+                        )
+
                     all_media_ids = get_unique_media_ids(messages)
                     media_infos = download_media_infos(config, all_media_ids)
 
@@ -96,6 +110,17 @@ def download_messages(config: FanslyConfig, state: DownloadState):
                 f"Could not find a chat history with "
                 f"{state.creator_name}; skipping messages download ..."
             )
+
+        if export_posts_json and len(collected_posts) > 0:
+            save_path = save_posts_json(
+                config,
+                state,
+                filename='posts_messages.json',
+                records=collected_posts,
+            )
+
+            if save_path is not None:
+                print_info(f"Saved message posts metadata to: {save_path}")
 
     else:
         print_error(

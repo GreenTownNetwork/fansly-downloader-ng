@@ -10,6 +10,7 @@ from time import sleep
 from .common import get_unique_media_ids, process_download_accessible_media
 from .core import DownloadState
 from .media import download_media_infos
+from .posts import collect_posts_records, save_posts_json
 from .types import DownloadType
 
 from config import FanslyConfig
@@ -17,7 +18,11 @@ from errors import ApiError
 from textio import input_enter_continue, print_debug, print_error, print_info, print_warning
 
 
-def download_timeline(config: FanslyConfig, state: DownloadState) -> None:
+def download_timeline(
+            config: FanslyConfig,
+            state: DownloadState,
+            export_posts_json: bool=False,
+        ) -> None:
 
     print_info(f"Executing Timeline functionality. Anticipate remarkable outcomes!")
     print()
@@ -28,6 +33,7 @@ def download_timeline(config: FanslyConfig, state: DownloadState) -> None:
     # this has to be up here so it doesn't get looped
     timeline_cursor = 0
     attempts = 0
+    collected_posts: list[dict] = []
 
     # Careful - "retry" means (1 + retries) runs
     while True and attempts <= config.timeline_retries:
@@ -53,6 +59,14 @@ def download_timeline(config: FanslyConfig, state: DownloadState) -> None:
             if timeline_response.status_code == 200:
 
                 timeline = timeline_response.json()['response']
+
+                if export_posts_json:
+                    collected_posts.extend(
+                        collect_posts_records(
+                            timeline.get('posts', []),
+                            source='timeline',
+                        )
+                    )
         
                 if config.debug:
                     print_debug(f'Timeline object: {timeline}')
@@ -117,3 +131,14 @@ def download_timeline(config: FanslyConfig, state: DownloadState) -> None:
         except Exception:
             print_error(f"Unexpected error during Timeline download: \n{traceback.format_exc()}", 36)
             input_enter_continue(config.interactive)
+
+    if export_posts_json and len(collected_posts) > 0:
+        save_path = save_posts_json(
+            config,
+            state,
+            filename='posts_timeline.json',
+            records=collected_posts,
+        )
+
+        if save_path is not None:
+            print_info(f"Saved timeline posts metadata to: {save_path}")

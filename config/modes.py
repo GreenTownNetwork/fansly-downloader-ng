@@ -9,5 +9,6 @@ class DownloadMode(StrEnum):
     COLLECTION = auto()
     MESSAGES = auto()
     NORMAL = auto()
+    POSTS = auto()
     SINGLE = auto()
     TIMELINE = auto()

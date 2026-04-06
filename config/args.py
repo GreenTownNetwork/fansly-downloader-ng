@@ -113,6 +113,14 @@ def parse_args() -> argparse.Namespace:
         help='Use "Timeline" download mode. This will download timeline content only.',
     )
     download_modes.add_argument(
+        '--posts',
+        required=False,
+        default=False,
+        action='store_true',
+        dest='download_mode_posts',
+        help='Use "Posts" download mode. This will download messages and timeline media plus JSON post metadata for both sources.',
+    )
+    download_modes.add_argument(
         '--collection',
         required=False,
         default=False,
@@ -377,6 +385,11 @@ def map_args_to_config(args: argparse.Namespace, config: FanslyConfig) -> bool:
 
     if args.download_mode_timeline:
         config.download_mode = DownloadMode.TIMELINE
+        config_overridden = True
+        download_mode_set = True
+
+    if args.download_mode_posts:
+        config.download_mode = DownloadMode.POSTS
         config_overridden = True
         download_mode_set = True
 
